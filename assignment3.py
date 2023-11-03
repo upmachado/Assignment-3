@@ -19,37 +19,36 @@ def read_input_file(filename):
 data = read_input_file(filename)  # Call the function with the variable 'filename'.
       
 def schedule_edf():
-    sorted_df = data.sort_values(by=data.columns[1])
-    sorted_df = sorted_df.iloc[:-1]
-    sorted_df['period'] = 0
-    sorted_df['time remaining'] = 0
-    original_values = sorted_df.iloc[:, 1].to_dict()
+    sorted_deadline = data.sort_values(by=data.columns[1])
+    sorted_deadline = sorted_deadline.iloc[:-1]
+    sorted_deadline['period'] = 0
+    sorted_deadline['time remaining'] = 0
+    original_values = sorted_deadline.iloc[:, 1].to_dict()
     current_time = 1
     output = ""
-    print(sorted_df)
+    print(sorted_deadline)
 
     while current_time<data.iat[0,1]:
         # change the output format before submitting
-        if sorted_df.iat[0, 7] > current_time:
-            for i in range(len(sorted_df)):
-                if sorted_df.iat[i, 7] < current_time:
-                    while(current_time>sorted_df.iat[0,7]):
-                        sorted_df.iat[i,8] = sorted_df.iat[0,7]-current_time
-                        current_time=sorted_df.iat[0,7]
-                    output += f"{current_time}, {'idle'}, 1188, {sorted_df.iat[0,8]}\n"
-
-            output += f"{current_time}, {'idle'}, 1188, {sorted_df.iat[0,1]-current_time}\n"
-            current_time = sorted_df.iat[0,1]
-            print(sorted_df)
+        if sorted_deadline.iat[0, 7] > current_time:
+            sorted_period = sorted_deadline.sort_values(by=sorted_deadline.columns[7])
+            current_time = sorted_deadline.iat[0,7]
+            print(sorted_deadline)
             print(current_time)
+            break
+
+
+            # output += f"{current_time}, {'idle'}, 1188, {sorted_df.iat[0,1]-current_time}\n"
+            # current_time = sorted_df.iat[0,1]
         else:
-            #output.extend([current_time, sorted_df.iat[0,0], 1188, sorted_df.iat[0,2]])
-            output += f"{current_time}, {sorted_df.iat[0,0]}, 1188, {sorted_df.iat[0,2]}\n"
-            current_time = current_time + sorted_df.iat[0,2]
-            sorted_df.iat[0,7] += original_values[sorted_df.index[0]]
-            sorted_df.iat[0,1] += original_values[sorted_df.index[0]]  # Update the deadline
-            sorted_df = sorted_df.sort_values(by=data.columns[1])
-            print(sorted_df)
+            #output.extend([current_time, sorted_deadline.iat[0,0], 1188, sorted_deadline.iat[0,2]])
+            output += f"{current_time}, {sorted_deadline.iat[0,0]}, 1188, {sorted_deadline.iat[0,2]}\n"
+            current_time = current_time + sorted_deadline.iat[0,2]
+            sorted_deadline.iat[0,7] += original_values[sorted_deadline.index[0]]
+            sorted_deadline.iat[0,1] += original_values[sorted_deadline.index[0]]  # Update the deadline
+            sorted_deadline = sorted_deadline.sort_values(by=sorted_deadline.columns[1])
+            print(current_time)
+            print(sorted_deadline)
                 
         #print(sorted_df)
     print(output)
