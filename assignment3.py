@@ -31,14 +31,14 @@ def schedule_edf():
     while current_time < data.iat[0,1]:
         # change the output format before submitting
 
-        while(sorted_deadline.iat[0, 7] > current_time):
+        if(sorted_deadline.iat[0, 7] > current_time):
             sorted_period = sorted_deadline.sort_values(by=sorted_deadline.columns[7])
             if sorted_period.iat[0,8] > 0:
                 partial_execution = sorted_deadline.iat[0,7] - current_time
             else:
                 partial_execution = sorted_deadline.iat[0,7] - current_time
             
-            if sorted_period.iat[0,2] >= partial_execution and sorted_period.iat[0,8] == 0 and sorted_period.iat[0,7] < current_time:
+            if sorted_period.iat[0,2] >= partial_execution and sorted_period.iat[0,8] == 0 and sorted_period.iat[0,7] <= current_time:
                 partial_execution = sorted_deadline.iat[0,7]-current_time
                 output += f"{current_time}, {sorted_period.iat[0,0]}, 1188, {partial_execution}\n"
                 current_time = sorted_deadline.iat[0,7]
@@ -47,7 +47,7 @@ def schedule_edf():
                 print(current_time)
                 print(sorted_deadline)
 
-            elif sorted_period.iat[0,2] < partial_execution and sorted_period.iat[0,8] == 0 and sorted_period.iat[0,7] < current_time:
+            elif sorted_period.iat[0,2] < partial_execution and sorted_period.iat[0,8] == 0 and sorted_period.iat[0,7] <= current_time:
                 output += f"{current_time}, {sorted_period.iat[0,0]}, 1188, {partial_execution}\n" 
                 current_time += partial_execution
                 sorted_period.iat[0,8] = sorted_period.iat[0,8] - partial_execution
@@ -59,7 +59,7 @@ def schedule_edf():
                 print(current_time)
                 print(sorted_deadline)
 
-            elif sorted_period.iat[0,8] > 0 and sorted_period.iat[0,7] < current_time:
+            elif sorted_period.iat[0,8] > 0 and sorted_period.iat[0,7] <= current_time:
                 output += f"{current_time}, {sorted_period.iat[0,0]}, 1188, {partial_execution}\n" 
                 current_time += partial_execution
                 sorted_period.iat[0,8] = sorted_period.iat[0,8] - partial_execution
@@ -71,8 +71,8 @@ def schedule_edf():
                 print(sorted_deadline)
 
             else:
-                output += f'{current_time}, "Idle", "Idle", {sorted_deadline.iat[0,7]-current_time}\n'
-                current_time = sorted_deadline.iat[0,7]
+                output += f'{current_time}, "Idle", "Idle", {sorted_period.iat[0,7]-current_time}\n'
+                current_time = sorted_period.iat[0,7]
                 print(current_time)
                 print(sorted_deadline)
 
