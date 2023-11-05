@@ -33,10 +33,7 @@ def schedule_edf():
 
         if(sorted_deadline.iat[0, 7] > current_time):
             sorted_period = sorted_deadline.sort_values(by=sorted_deadline.columns[7])
-            if sorted_period.iat[0,8] > 0:
-                partial_execution = sorted_deadline.iat[0,7] - current_time
-            else:
-                partial_execution = sorted_deadline.iat[0,7] - current_time
+            partial_execution = sorted_deadline.iat[0,7] - current_time
             
             if sorted_period.iat[0,2] >= partial_execution and sorted_period.iat[0,8] == 0 and sorted_period.iat[0,7] <= current_time:
                 partial_execution = sorted_deadline.iat[0,7]-current_time
