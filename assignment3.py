@@ -95,10 +95,48 @@ def schedule_edf():
 
     return output
 
-#def schedule_rm():
+def schedule_rm():
+    sorted_deadline = data.sort_values(by=data.columns[1])
+    sorted_deadline = sorted_deadline.iloc[:-1]
+    sorted_deadline['period'] = 0
+    sorted_deadline['time remaining'] = 0
+    original_values = sorted_deadline.iloc[:, 1].to_dict()
+    current_time = 1
+    output = ""
+    print(current_time)
+    print(sorted_deadline)
 
-    
-    #while current_time<data.iat[0,1]:
+    while current_time < data.iat[0,1]:
+        if(sorted_deadline.iat[0,7] > current_time):
+            sorted_period = sorted_deadline.sort_values(by=sorted_deadline.columns[7])
+            partial_execution = sorted_deadline.iat[0,7] - current_time
+            if sorted_period.iat[0,2] < partial_execution and sorted_period.iat[0,8] == 0 and sorted_period.iat[0,7] <= current_time:
+                output += f'{current_time}, {sorted_period.iat[0,0]}, 1188, {sorted_period.iat[0,2]}\n'
+                current_time += sorted_period.iat[0,2]
+                sorted_period.iat[0,7] += sorted_period.iat[0,1]
+                sorted_deadline = sorted_period.sort_values(by=sorted_period.columns[1])
+                print(current_time)
+                print(sorted_deadline)
+            elif sorted_period.iat[0,2] >= partial_execution and sorted_period.iat[0,8] == 0 and sorted_period.iat[0,7] <= current_time:
+                output += f'{current_time}, {sorted_period.iat[0,0]}, 1188, {sorted_deadline.iat[0,7] - current_time}\n'
+                sorted_period.iat[0,8] = sorted_period.iat[0,2] - partial_execution
+                current_time += (sorted_deadline.iat[0,7] - current_time)
+                sorted_deadline = sorted_period.sort_values(by=sorted_period.columns[1])
+                print(current_time)
+                print(sorted_deadline)
+            else:
+                output += f'{current_time}, "Idle", "Idle", {partial_execution}\n'
+                current_time = sorted_deadline.iat[0,7]
+                print(current_time)
+                print(sorted_deadline)
+        else:
+            output += f"{current_time}, {sorted_deadline.iat[0,0]}, 1188, {sorted_deadline.iat[0,2]}\n"
+            current_time = current_time + sorted_deadline.iat[0,2]
+            sorted_deadline.iat[0,7] += sorted_deadline.iat[0,1]
+            sorted_deadline = sorted_deadline.sort_values(by=sorted_deadline.columns[1])
+            print(current_time)
+            print(sorted_deadline)
+    return output
 
 # Implement the scheduling algorithm based on user input
 if scheduler == "EDF":
