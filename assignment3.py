@@ -155,3 +155,13 @@ print(schedule)
 
 # Write the scheduling results to the output file
 #write_output_file("output.txt", schedule, total_energy, idle_percentage, total_execution_time)
+
+
+def calculate_energy(frequency, execution_time):
+    if frequency in power_model:
+        power = power_model[frequency]  # Get the power at the specified frequency
+        energy = power * execution_time  # Calculate energy consumption
+        return energy
+    else:
+        print(f"Error: Invalid frequency {frequency}")
+        return 0
