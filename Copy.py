@@ -27,11 +27,11 @@ def schedule_edf():
     sorted_deadline['time remaining'] = 0
     original_values = sorted_deadline.iloc[:, 1].to_dict()
     current_time = 1
+    output = ""
     total_energy = 0
     idle_time = 0
-    output = ""
-    #print(current_time)
-    #print(sorted_deadline)
+    print(current_time)
+    print(sorted_deadline)
 
     while current_time < data.iat[0,1]:
         # change the output format before submitting
@@ -158,7 +158,7 @@ def schedule_rm():
 
 # Implement the scheduling algorithm based on user input
 if scheduler == "EDF":
-    idle_percentage, energy_output, schedule = schedule_edf()
+    idle_time, energy_output, schedule = schedule_edf()
 elif scheduler == "RM":
     schedule = schedule_rm()
 #elif scheduler == "EE" and energy_efficient:
@@ -170,7 +170,7 @@ else:
 print(schedule)
 #Calculate energy consumption, idle time, and total execution time
 print("Schedule", scheduler, "energy output:", energy_output , "J")
-print("Schedule", scheduler, "idle percentage:", idle_percentage, "%")
+print("Schedule", scheduler, "idle percentage:", idle_time, "%")
 #total_energy, idle_percentage, total_execution_time = calculate_metrics(schedule, power_settings, max_time)
 
 # Write the scheduling results to the output file
