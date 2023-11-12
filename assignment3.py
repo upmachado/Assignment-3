@@ -1,10 +1,8 @@
 import sys
 import pandas as pd
 
-#filename = sys.argv[1]
-#scheduler = sys.argv[2]
-filename = "input1.txt"
-scheduler = "EDF"
+filename = sys.argv[1]
+scheduler = sys.argv[2]
 energy_efficient = len(sys.argv) > 3 and sys.argv[3] == "EE"
 output = []
 
@@ -115,6 +113,8 @@ def schedule_rm():
     sorted_deadline['time remaining'] = 0
     original_values = sorted_deadline.iloc[:, 1].to_dict()
     current_time = 1
+    total_energy = 0
+    idle_time = 0
     output = ""
     print(current_time)
     print(sorted_deadline)
@@ -146,10 +146,20 @@ def schedule_rm():
                 current_time = sorted_deadline.iat[0,7]
                 print(current_time)
                 print(sorted_deadline)
+        elif sorted_deadline.iat[0,8] > 0:
+            output += f"{current_time}, {sorted_deadline.iat[0,0]} 1188 {sorted_deadline.iat[0,8]} {str((sorted_deadline.iat[0,8]) * (data.iat[0,6])/1000)+'J'}\n"
+            total_energy += (sorted_deadline.iat[0,8] * (data.iat[0,6])/1000)
+            current_time += sorted_deadline.iat[0,8]
+            sorted_deadline.iat[0,8] = 0
+            sorted_deadline.iat[0,7] += original_values[sorted_deadline.index[0]]
+            sorted_deadline = sorted_deadline.sort_values(by=sorted_deadline.columns[1])
+            print(current_time)
+            print(sorted_deadline)
         else:
             output += f"{current_time}, {sorted_deadline.iat[0,0]}, 1188, {sorted_deadline.iat[0,2]}\n"
-            current_time = current_time + sorted_deadline.iat[0,2]
-            sorted_deadline.iat[0,7] += sorted_deadline.iat[0,1]
+            total_energy += (sorted_deadline.iat[0,2] * (data.iat[0,2])/1000)
+            current_time += sorted_deadline.iat[0,2]
+            sorted_deadline.iat[0,7] += original_values[sorted_deadline.index[0]]
             sorted_deadline = sorted_deadline.sort_values(by=sorted_deadline.columns[1])
             print(current_time)
             print(sorted_deadline)
@@ -158,7 +168,7 @@ def schedule_rm():
 
 # Implement the scheduling algorithm based on user input
 if scheduler == "EDF":
-    idle_percentage, energy_output, schedule = schedule_edf()
+    idle_percentage, energy_consumption, schedule = schedule_edf()
 elif scheduler == "RM":
     schedule = schedule_rm()
 #elif scheduler == "EE" and energy_efficient:
@@ -169,9 +179,5 @@ else:
 
 print(schedule)
 #Calculate energy consumption, idle time, and total execution time
-print("Schedule", scheduler, "energy output:", energy_output , "J")
+print("Schedule", scheduler, "energy consumption:", energy_consumption , "J")
 print("Schedule", scheduler, "idle percentage:", idle_percentage, "%")
-#total_energy, idle_percentage, total_execution_time = calculate_metrics(schedule, power_settings, max_time)
-
-# Write the scheduling results to the output file
-#write_output_file("output.txt", schedule, total_energy, idle_percentage, total_execution_time)
