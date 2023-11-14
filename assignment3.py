@@ -3,9 +3,9 @@ import pandas as pd
 
 filename = sys.argv[1]
 scheduler = sys.argv[2]
-# filename = "input1.txt"
-# scheduler = "RM"
 energy_efficient = len(sys.argv) > 3 and sys.argv[3] == "EE"
+energy_efficient = True
+
 output = []
 
 def read_input_file(filename):
@@ -18,7 +18,7 @@ def read_input_file(filename):
         print(f"The file '{filename}' was not found.")
         return None
 
-data = read_input_file(filename)  # Call the function with the variable 'filename'.
+data = read_input_file(filename)  
       
 def schedule_edf(data):
     sorted_deadline = data.sort_values(by=data.columns[1])
@@ -208,18 +208,38 @@ def schedule_rm(data):
     idle_time = (idle_time / current_time) * 100
     return idle_time, total_energy, output
 
-# Implement the scheduling algorithm based on user input
-if scheduler == "EDF":
+def max_efficiency():
+    columns_to_multiply = data.columns[2:6]  
+    first_element_values = data.iloc[0, 2:6] 
+    data.iloc[1:, 2:6] = data.iloc[1:, 2:6].multiply(first_element_values, axis=1)
+    data.iloc[1:, 2:6] = data.iloc[1:, 2:6] / 1000
+    efficienct_freq = data.copy()
+    print(efficienct_freq)
+    data_subset = data.iloc[1:, :]
+
+    # Calculate the percentage decrease for each pair of columns
+    data_subset['decrease% 2 3'] = ((data_subset.iloc[:, 2] - data_subset.iloc[:, 3]) / data_subset.iloc[:, 2]) * 100
+    data_subset['decrease% 2 4'] = ((data_subset.iloc[:, 2] - data_subset.iloc[:, 4]) / data_subset.iloc[:, 2]) * 100
+    data_subset['decrease% 2 5'] = ((data_subset.iloc[:, 2] - data_subset.iloc[:, 5]) / data_subset.iloc[:, 2]) * 100
+
+    # Now, data_subset contains three additional columns with the percentage decrease values, excluding the first row
+    print(data_subset)
+
+if energy_efficient:
+    if scheduler == "EDF":
+        max_efficiency()
+    #elif scheduler == "RM":
+        
+elif scheduler == "EDF":
     idle_percentage, energy_consumption, schedule = schedule_edf(data)
+    print(schedule)
+    print("Schedule", scheduler, "energy consumption:", energy_consumption , "J\n")
+    print("Schedule", scheduler, "idle percentage:", idle_percentage, "%\n")
 elif scheduler == "RM":
     idle_percentage, energy_consumption, schedule = schedule_rm(data)
-#elif scheduler == "EE" and energy_efficient:
-    #schedule = schedule_ee_edf() if scheduler == "EDF" else schedule_ee_rm()
+    print(schedule)
+    print("Schedule", scheduler, "energy consumption:", energy_consumption , "J\n")
+    print("Schedule", scheduler, "idle percentage:", idle_percentage, "%\n")
 else:
     print("Invalid scheduling algorithm.")
     sys.exit(1)
-
-print(schedule)
-#Calculate energy consumption, idle time, and total execution time
-print("Schedule", scheduler, "energy consumption:", energy_consumption , "J\n")
-print("Schedule", scheduler, "idle percentage:", idle_percentage, "%\n")
