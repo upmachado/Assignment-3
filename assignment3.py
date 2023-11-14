@@ -1,8 +1,10 @@
 import sys
 import pandas as pd
 
-filename = sys.argv[1]
-scheduler = sys.argv[2]
+#filename = sys.argv[1]
+#scheduler = sys.argv[2]
+filename = "input1.txt"
+scheduler = "RM"
 energy_efficient = len(sys.argv) > 3 and sys.argv[3] == "EE"
 output = []
 
@@ -18,7 +20,7 @@ def read_input_file(filename):
 
 data = read_input_file(filename)  # Call the function with the variable 'filename'.
       
-def schedule_edf():
+def schedule_edf(data):
     sorted_deadline = data.sort_values(by=data.columns[1])
     sorted_deadline = sorted_deadline.iloc[:-1]
     sorted_deadline['period'] = 0
@@ -28,8 +30,8 @@ def schedule_edf():
     total_energy = 0
     idle_time = 0
     output = ""
-    #print(current_time)
-    #print(sorted_deadline)
+    print(current_time)
+    print(sorted_deadline)
 
     while current_time < data.iat[0,1]:
         # change the output format before submitting
@@ -44,8 +46,9 @@ def schedule_edf():
                     current_time += partial_execution
                     sorted_period.iat[0,8] = sorted_period.iat[0,8] - partial_execution
                     sorted_deadline = sorted_period.sort_values(by=sorted_period.columns[1])
-                    #print(current_time)
-                    #print(sorted_deadline)
+                    print(current_time)
+                    print(sorted_deadline)
+                
                 elif sorted_period.iat[0,8] > 0 and sorted_period.iat[0,8] <= partial_execution:
                     output += f"{current_time} {sorted_period.iat[0,0]} 1188 {sorted_period.iat[0,8]} {str(sorted_period.iat[0,8] * (data.iat[0,2])/1000)+'J'}\n"
                     total_energy += (sorted_period.iat[0,8] * (data.iat[0,2])/1000)
@@ -54,16 +57,18 @@ def schedule_edf():
                     sorted_period.iat[0,7] += original_values[sorted_period.index[0]]
                     sorted_period.iat[0,1] += original_values[sorted_period.index[0]]
                     sorted_deadline = sorted_period.sort_values(by=sorted_period.columns[1])
-                    #print(current_time)
-                    #print(sorted_deadline)
+                    print(current_time)
+                    print(sorted_deadline)
+                
                 elif sorted_period.iat[0,2] > partial_execution:
                     output += f"{current_time} {sorted_period.iat[0,0]} 1188 {partial_execution} {str(partial_execution * (data.iat[0,2])/1000)+'J'}\n"
                     total_energy += (partial_execution * (data.iat[0,2])/1000)
                     current_time += partial_execution
                     sorted_period.iat[0,8] = sorted_period.iat[0,2] - partial_execution
                     sorted_deadline = sorted_period.sort_values(by=sorted_period.columns[1])
-                    #print(current_time)
-                    #print(sorted_deadline)
+                    print(current_time)
+                    print(sorted_deadline)
+                
                 elif sorted_period.iat[0,2] <= partial_execution:
                     output += f"{current_time} {sorted_period.iat[0,0]} 1188 {sorted_period.iat[0,2]} {str(sorted_period.iat[0,2] * (data.iat[0,2])/1000)+'J'}\n"
                     total_energy += (sorted_period.iat[0,2] * (data.iat[0,2])/1000)
@@ -71,16 +76,16 @@ def schedule_edf():
                     sorted_period.iat[0,7] += original_values[sorted_period.index[0]]
                     sorted_period.iat[0,1] += original_values[sorted_period.index[0]]
                     sorted_deadline = sorted_period.sort_values(by=sorted_period.columns[1])
-                    #print(current_time)
-                    #print(sorted_deadline)
+                    print(current_time)
+                    print(sorted_deadline)
             else:
                 output += f"{current_time} IDLE IDLE {sorted_period.iat[0,7]-current_time} {str((sorted_period.iat[0,7]-current_time) * (data.iat[0,6])/1000)+'J'}\n"
                 idle_time += (sorted_period.iat[0,7] - current_time)
                 total_energy += ((sorted_period.iat[0,7]-current_time) * (data.iat[0,6])/1000)
                 current_time += sorted_period.iat[0,7] - current_time
                 sorted_deadline = sorted_period.sort_values(by=sorted_period.columns[1])
-                #print(current_time , idle_time)
-                #print(sorted_deadline)
+                print(current_time , idle_time)
+                print(sorted_deadline)
         else:
             if(sorted_deadline.iat[0,8] > 0):
                 output += f"{current_time}, {sorted_deadline.iat[0,0]} 1188 {sorted_deadline.iat[0,8]} {str((sorted_deadline.iat[0,8]) * (data.iat[0,6])/1000)+'J'}\n"
@@ -90,8 +95,8 @@ def schedule_edf():
                 sorted_deadline.iat[0,7] += original_values[sorted_deadline.index[0]]
                 sorted_deadline.iat[0,1] += original_values[sorted_deadline.index[0]]
                 sorted_deadline = sorted_deadline.sort_values(by=sorted_deadline.columns[1])
-                #print(current_time)
-                #print(sorted_deadline)
+                print(current_time)
+                print(sorted_deadline)
             else:
                 output += f"{current_time} {sorted_deadline.iat[0,0]} 1188 {sorted_deadline.iat[0,2]} {str(sorted_deadline.iat[0,2] * (data.iat[0,2]/1000))+'J'}\n"
                 total_energy += (sorted_deadline.iat[0,2] * (data.iat[0,2])/1000)
@@ -100,77 +105,112 @@ def schedule_edf():
                 sorted_deadline.iat[0,7] += original_values[sorted_deadline.index[0]]
                 sorted_deadline.iat[0,1] += original_values[sorted_deadline.index[0]]
                 sorted_deadline = sorted_deadline.sort_values(by=sorted_deadline.columns[1])
-                #print(current_time)
-                #print(sorted_deadline)
+                print(current_time)
+                print(sorted_deadline)
 
     idle_time = (idle_time / current_time) * 100
     return idle_time, total_energy, output
 
-def schedule_rm():
+def schedule_rm(data):
     sorted_deadline = data.sort_values(by=data.columns[1])
     sorted_deadline = sorted_deadline.iloc[:-1]
     sorted_deadline['period'] = 0
     sorted_deadline['time remaining'] = 0
     original_values = sorted_deadline.iloc[:, 1].to_dict()
+    sorted_period = sorted_deadline.sort_values(by=sorted_deadline.columns[7])
     current_time = 1
     total_energy = 0
     idle_time = 0
+    remaining_time = 0
     output = ""
-    print(current_time)
-    print(sorted_deadline)
+    print("Current time:\n", current_time)
+    print("Sorted by deadline:\n", sorted_deadline)
+    print("Sorted by period:\n", sorted_period)
 
-    while current_time < data.iat[0,1]:
+    while current_time < data.iat[0, 1]:
 
-        if(sorted_deadline.iat[0,7] > current_time):
-            sorted_period = sorted_deadline.sort_values(by=sorted_deadline.columns[7])
-            partial_execution = sorted_deadline.iat[0,7] - current_time
+        active_tasks = sorted_deadline[sorted_deadline['period'] <= current_time]
+        priority_list = sorted_period[sorted_period['period'] > current_time]
+        print("CURRENT TIME\n", current_time)
+        #print("Sorted by deadline:\n", sorted_deadline)     
+        print("READY LIST\n", active_tasks)
+        print("PRIORITY LIST\n", priority_list)
 
-            if sorted_period.iat[0,2] < partial_execution and sorted_period.iat[0,8] == 0 and sorted_period.iat[0,7] <= current_time:
-                output += f'{current_time}, {sorted_period.iat[0,0]}, 1188, {sorted_period.iat[0,2]}\n'
-                current_time += sorted_period.iat[0,2]
-                sorted_period.iat[0,7] += sorted_period.iat[0,1]
-                sorted_deadline = sorted_period.sort_values(by=sorted_period.columns[1])
-                print(current_time)
-                print(sorted_deadline)
+        if active_tasks.empty:
+            output += f"{current_time} IDLE IDLE {sorted_deadline.iat[0,7] - current_time} {str((sorted_deadline.iat[0,7]-current_time) * (data.iat[0,6])/1000)+'J'}\n"
+            idle_time += (sorted_deadline.iat[0,7] - current_time)
+            total_energy += ((sorted_deadline.iat[0,7]-current_time) * (data.iat[0,6])/1000)
+            current_time += sorted_deadline.iat[0,7] - current_time
+            print("Current time:", current_time, "Idle time:", idle_time)
+            print("Sorted by deadline:\n", sorted_deadline)
+            print("PRIORITY LIST\n", priority_list)
 
-            elif sorted_period.iat[0,2] >= partial_execution and sorted_period.iat[0,8] == 0 and sorted_period.iat[0,7] <= current_time:
-                output += f'{current_time}, {sorted_period.iat[0,0]}, 1188, {sorted_deadline.iat[0,7] - current_time}\n'
-                sorted_period.iat[0,8] = sorted_period.iat[0,2] - partial_execution
-                current_time += (sorted_deadline.iat[0,7] - current_time)
-                sorted_deadline = sorted_period.sort_values(by=sorted_period.columns[1])
-                print(current_time)
-                print(sorted_deadline)
+
+        else:
+            priority_check = 0 if priority_list.empty else priority_list.iat[0,7]
+            if(0 < priority_check - current_time < active_tasks.iat[0,2]):
+                partial_execution =  priority_list.iat[0,7] - current_time
+                if active_tasks.iat[0,8] > partial_execution:
+                    remaining_time = partial_execution
+                    active_tasks.iat[0,8] -= remaining_time 
+                elif 0 < active_tasks.iat[0,8] <= partial_execution:
+                    remaining_time = active_tasks.iat[0,8]
+                    active_tasks.iat[0,8] = 0
+                elif active_tasks.iat[0,2] > partial_execution:
+                    remaining_time = partial_execution
+                    active_tasks.iat[0,8] = active_tasks.iat[0,2] - remaining_time
+                elif active_tasks.iat[0,2] <= partial_execution:
+                    remaining_time = active_tasks.iat[0,2]
+                output += f"{current_time} {active_tasks.iat[0,0]} 1188 {remaining_time} {str(remaining_time * (data.iat[0,2])/1000)+'J'}\n"
+                total_energy += (remaining_time * (data.iat[0,2])/1000)
+                current_time += remaining_time
+                if active_tasks.iat[0,8] == 0:
+                    sorted_deadline.loc[active_tasks.index[0],'period'] += original_values[active_tasks.index[0]]
+                sorted_deadline.loc[active_tasks.index[0],'time remaining'] = active_tasks.iat[0,8]
+                sorted_period = sorted_deadline.sort_values(by=sorted_deadline.columns[7])
+                priority_list = sorted_period[sorted_period['period'] > current_time]
+                print("Current time:\n", current_time, "Task executed:", active_tasks.iat[0,0])
+                active_tasks = sorted_deadline[sorted_deadline['period'] <= current_time]
+                print("Sorted by deadline:\n", sorted_deadline)
+                print("READY LIST\n", active_tasks)
+                print("PRIORITY LIST\n", priority_list)
 
             else:
-                output += f'{current_time}, "Idle", "Idle", {partial_execution}\n'
-                current_time = sorted_deadline.iat[0,7]
-                print(current_time)
-                print(sorted_deadline)
-        elif sorted_deadline.iat[0,8] > 0:
-            output += f"{current_time}, {sorted_deadline.iat[0,0]} 1188 {sorted_deadline.iat[0,8]} {str((sorted_deadline.iat[0,8]) * (data.iat[0,6])/1000)+'J'}\n"
-            total_energy += (sorted_deadline.iat[0,8] * (data.iat[0,6])/1000)
-            current_time += sorted_deadline.iat[0,8]
-            sorted_deadline.iat[0,8] = 0
-            sorted_deadline.iat[0,7] += original_values[sorted_deadline.index[0]]
-            sorted_deadline = sorted_deadline.sort_values(by=sorted_deadline.columns[1])
-            print(current_time)
-            print(sorted_deadline)
-        else:
-            output += f"{current_time}, {sorted_deadline.iat[0,0]}, 1188, {sorted_deadline.iat[0,2]}\n"
-            total_energy += (sorted_deadline.iat[0,2] * (data.iat[0,2])/1000)
-            current_time += sorted_deadline.iat[0,2]
-            sorted_deadline.iat[0,7] += original_values[sorted_deadline.index[0]]
-            sorted_deadline = sorted_deadline.sort_values(by=sorted_deadline.columns[1])
-            print(current_time)
-            print(sorted_deadline)
+                if(active_tasks.iat[0,8] > 0):
+                    output += f"{current_time}, {active_tasks.iat[0,0]} 1188 {active_tasks.iat[0,8]} {str((active_tasks.iat[0,8]) * (data.iat[0,6])/1000)+'J'}\n"
+                    total_energy += (active_tasks.iat[0,8] * (data.iat[0,6])/1000)
+                    current_time += active_tasks.iat[0,8]
+                    sorted_deadline.iat[0,8] = 0
+                    sorted_deadline.loc[active_tasks.index[0],'period'] += original_values[active_tasks.index[0]]
+                    active_tasks = sorted_deadline[sorted_deadline['period'] <= current_time]
+                    sorted_period = sorted_deadline.sort_values(by=sorted_deadline.columns[7])
+                    priority_list = sorted_period[sorted_period['period'] > current_time]
+                    print("Current time:\n", current_time, "Task executed:", active_tasks.iat[0,0])
+                    print("Sorted by deadline:\n", sorted_deadline)
+                    print("READY LIST\n", active_tasks)
+                    print("PRIORITY LIST\n", priority_list)
 
-    return output
+                else:
+                    output += f"{current_time} {active_tasks.iat[0,0]} 1188 {active_tasks.iat[0,2]} {str(active_tasks.iat[0,2] * (data.iat[0,2]/1000))+'J'}\n"
+                    total_energy += (active_tasks.iat[0,2] * (data.iat[0,2])/1000)
+                    current_time += active_tasks.iat[0,2]
+                    sorted_deadline.loc[active_tasks.index[0],'period'] += original_values[active_tasks.index[0]]
+                    active_tasks = sorted_deadline[sorted_deadline['period'] <= current_time]
+                    sorted_period = sorted_deadline.sort_values(by=sorted_deadline.columns[7])
+                    priority_list = sorted_period[sorted_period['period'] > current_time]
+                    print("Current time:\n", current_time, "Task executed:", active_tasks.iat[0,0])
+                    print("Sorted by deadline:\n", sorted_deadline)
+                    print("READY LIST\n", active_tasks)
+                    print("PRIORITY LIST\n", priority_list)
+
+    idle_time = (idle_time / current_time) * 100
+    return idle_time, total_energy, output
 
 # Implement the scheduling algorithm based on user input
 if scheduler == "EDF":
-    idle_percentage, energy_consumption, schedule = schedule_edf()
+    idle_percentage, energy_consumption, schedule = schedule_edf(data)
 elif scheduler == "RM":
-    schedule = schedule_rm()
+    idle_percentage, energy_consumption, schedule = schedule_rm(data)
 #elif scheduler == "EE" and energy_efficient:
     #schedule = schedule_ee_edf() if scheduler == "EDF" else schedule_ee_rm()
 else:
