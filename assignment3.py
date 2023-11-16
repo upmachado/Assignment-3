@@ -208,7 +208,7 @@ def schedule_rm(data):
     idle_time = (idle_time / current_time) * 100
     return idle_time, total_energy, output
 
-def max_efficiency():
+def max_efficiency(data):
     columns_to_multiply = data.columns[2:6]  
     first_element_values = data.iloc[0, 2:6] 
     data.iloc[1:, 2:6] = data.iloc[1:, 2:6].multiply(first_element_values, axis=1)
@@ -227,7 +227,7 @@ def max_efficiency():
 
 if energy_efficient:
     if scheduler == "EDF":
-        max_efficiency()
+        max_efficiency(data)
     #elif scheduler == "RM":
         
 elif scheduler == "EDF":
