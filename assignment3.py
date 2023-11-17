@@ -4,8 +4,6 @@ import pandas as pd
 filename = sys.argv[1]
 scheduler = sys.argv[2]
 energy_efficient = len(sys.argv) > 3 and sys.argv[3] == "EE"
-energy_efficient = True
-
 output = []
 
 def read_input_file(filename):
@@ -30,11 +28,20 @@ def schedule_edf(data):
     total_energy = 0
     idle_time = 0
     output = ""
+    missed_deadline = False
     # print(current_time)
     # print(sorted_deadline)
 
     while current_time < data.iat[0,1]:
         # change the output format before submitting
+        active_tasks = sorted_deadline[sorted_deadline['period'] <= current_time]
+        print(active_tasks)
+        if not active_tasks.empty:
+            for index, row in active_tasks.iterrows():
+                if row.iat[1] < current_time and row.iat[7]<current_time and row.iat[1]>row.iat[7]:
+                    missed_deadline = True
+                    return 0, 0, "Deadline missed", missed_deadline
+
 
         if(sorted_deadline.iat[0,7] > current_time):
             sorted_period = sorted_deadline.sort_values(by=sorted_deadline.columns[7])
@@ -108,7 +115,7 @@ def schedule_edf(data):
                 # print(sorted_deadline)
 
     idle_time = (idle_time / current_time) * 100
-    return idle_time, total_energy, output
+    return idle_time, total_energy, output, missed_deadline
 
 def schedule_rm(data):
     sorted_deadline = data.sort_values(by=data.columns[1])
@@ -122,28 +129,34 @@ def schedule_rm(data):
     idle_time = 0
     remaining_time = 0
     output = ""
+    missed_deadline = False
     # print("Current time:\n", current_time)
     # print("Sorted by deadline:\n", sorted_deadline)
     # print("Sorted by period:\n", sorted_period)
 
     while current_time < data.iat[0, 1]:
 
+
         active_tasks = sorted_deadline[sorted_deadline['period'] <= current_time]
         priority_list = sorted_period[sorted_period['period'] > current_time]
-        #print("CURRENT TIME\n", current_time)
-        #print("Sorted by deadline:\n", sorted_deadline)     
-        #print("READY LIST\n", active_tasks)
-        #print("PRIORITY LIST\n", priority_list)
+        #print("CURRENT TIME:", current_time)
+        # print("Sorted by deadline:\n", sorted_deadline)     
+        # print("READY LIST\n", active_tasks)
+        # print("PRIORITY LIST\n", priority_list)
+        if not active_tasks.empty:
+            for index, row in active_tasks.iterrows():
+                if row.iat[1] < current_time and row.iat[7]<current_time and row.iat[1]>row.iat[7]:
+                    missed_deadline = True
+                    return 0, 0, "Deadline missed", missed_deadline
 
         if active_tasks.empty:
             output += f"{current_time} IDLE IDLE {priority_list.iat[0,7] - current_time} {str((priority_list.iat[0,7]-current_time) * (data.iat[0,6])/1000)+'J'}\n"
             idle_time += (priority_list.iat[0,7] - current_time)
             total_energy += ((priority_list.iat[0,7]-current_time) * (data.iat[0,6])/1000)
             current_time += priority_list.iat[0,7] - current_time
-            # print("Current time:", current_time, "Idle time:", idle_time)
-            # print("READY LIST\n", active_tasks)
-            # print("PRIORITY LIST\n", priority_list)
-
+            print("Current time:", current_time, "Idle time:", idle_time)
+            print("READY LIST\n", active_tasks)
+            print("PRIORITY LIST\n", priority_list)
 
         else:
             priority_check = 0 if priority_list.empty else priority_list.iat[0,7]
@@ -206,24 +219,53 @@ def schedule_rm(data):
 
 
     idle_time = (idle_time / current_time) * 100
-    return idle_time, total_energy, output
+    return idle_time, total_energy, output, missed_deadline
 
 def max_efficiency(data):
-    columns_to_multiply = data.columns[2:6]  
-    first_element_values = data.iloc[0, 2:6] 
-    data.iloc[1:, 2:6] = data.iloc[1:, 2:6].multiply(first_element_values, axis=1)
-    data.iloc[1:, 2:6] = data.iloc[1:, 2:6] / 1000
-    efficienct_freq = data.copy()
-    print(efficienct_freq)
-    data_subset = data.iloc[1:, :]
+    idle_percentage, energy_consumption, schedule = schedule_edf(data)
+    idle_time = idle_percentage * data.iat[0, 1] / 100
+    print(idle_time)
+    print("Data:\n", data)
 
-    # Calculate the percentage decrease for each pair of columns
-    data_subset['decrease% 2 3'] = ((data_subset.iloc[:, 2] - data_subset.iloc[:, 3]) / data_subset.iloc[:, 2]) * 100
-    data_subset['decrease% 2 4'] = ((data_subset.iloc[:, 2] - data_subset.iloc[:, 4]) / data_subset.iloc[:, 2]) * 100
-    data_subset['decrease% 2 5'] = ((data_subset.iloc[:, 2] - data_subset.iloc[:, 5]) / data_subset.iloc[:, 2]) * 100
+    data_energy_consumed = data.iloc[1:, :].copy()
+    data_energy_consumed.loc[1:, 1188:384] = (data_energy_consumed.loc[1:, 1188:384] * data.loc[0, 1188:384]).astype(int)
+    data_energy_consumed.loc[1:, 1188:384] = (data_energy_consumed.loc[1:, 1188:384] / 1000).astype(float)  # Explicitly cast to float'
 
-    # Now, data_subset contains three additional columns with the percentage decrease values, excluding the first row
-    print(data_subset)
+    df_percent_change = data.iloc[1:, :].copy()
+    print("Energy by task:\n", data_energy_consumed)
+
+    df_percent_change['decrease % 2 3'] = (((data_energy_consumed.loc[1:, 1188] - data_energy_consumed.loc[1:, 918]) / data_energy_consumed.loc[1:, 1188]) * 100).astype(float)
+    df_percent_change['decrease % 2 4'] = (((data_energy_consumed.loc[1:, 1188] - data_energy_consumed.loc[1:, 648]) / data_energy_consumed.loc[1:, 1188]) * 100).astype(float)
+    df_percent_change['decrease % 2 5'] = (((data_energy_consumed.loc[1:, 1188] - data_energy_consumed.loc[1:, 384]) / data_energy_consumed.loc[1:, 1188]) * 100).astype(float)
+
+    df_percent_change['max_decrease'] = df_percent_change[['decrease % 2 3', 'decrease % 2 4', 'decrease % 2 5']].max(axis=1)
+    df_percent_change = df_percent_change.sort_values(by='max_decrease', ascending=False)
+    df_percent_change['Times executed'] = (data.iat[0, 1] / df_percent_change.loc[:, 'Deadline']).round()
+    df_percent_change = df_percent_change.drop(df_percent_change.columns[2:6], axis=1)
+
+    print("Percent change:\n", df_percent_change)
+
+
+    print("Energy by task:\n", data_energy_consumed)
+
+    # data_wcet_change = data.loc[1:, :].copy()
+    # data_wcet_change['subtract_2_3'] = idle_time - ((data_wcet_change.loc[:, 918] - data_wcet_change.loc[:, 1188]) * (data.iat[0,1]/data_wcet_change.loc[:, 'Deadline']).round())
+    # data_wcet_change['subtract_2_4'] = idle_time - ((data_wcet_change.loc[:, 648] - data_wcet_change.loc[:, 1188]) * (data.iat[0,1]/data_wcet_change.loc[:, 'Deadline']).round())
+    # data_wcet_change['subtract_2_5'] = idle_time - ((data_wcet_change.loc[:, 384] - data_wcet_change.loc[:, 1188]) * (data.iat[0,1]/data_wcet_change.loc[:, 'Deadline']).round())
+    # # data_wcet_change['subtract_2_3'] = (data_wcet_change.loc[:, 918] - data_wcet_change.loc[:, 1188])# * (data.iat[0,1]/data_wcet_change.loc[:, 'Deadline']).round())
+    # # data_wcet_change['subtract_2_4'] = (data_wcet_change.loc[:, 648] - data_wcet_change.loc[:, 1188])# * (data.iat[0,1]/data_wcet_change.loc[:, 'Deadline']).round())
+    # # data_wcet_change['subtract_2_5'] = (data_wcet_change.loc[:, 384] - data_wcet_change.loc[:, 1188])# * (data.iat[0,1]/data_wcet_change.loc[:, 'Deadline']).round())
+    
+    # data_wcet_change['Executions'] = (data.iat[0,1]/data_wcet_change.loc[:, 'Deadline']).round()
+    
+
+    # data_wcet_change['possible schedule'] = data_wcet_change[['subtract_2_3', 'subtract_2_4', 'subtract_2_5']].apply(lambda x: x > 0).all(axis=1)
+    # print("Step change:\n", data_wcet_change)
+
+    #print("Data:\n", data)
+    #print("Energy by task:\n", data_energy_consumed)
+    #print("Step change:\n", data_wcet_change)
+
 
 if energy_efficient:
     if scheduler == "EDF":
@@ -231,15 +273,15 @@ if energy_efficient:
     #elif scheduler == "RM":
         
 elif scheduler == "EDF":
-    idle_percentage, energy_consumption, schedule = schedule_edf(data)
+    idle_percentage, energy_consumption, schedule, missed_deadline = schedule_edf(data)
     print(schedule)
-    print("Schedule", scheduler, "energy consumption:", energy_consumption , "J\n")
-    print("Schedule", scheduler, "idle percentage:", idle_percentage, "%\n")
+    print("Schedule", scheduler,". Energy consumption:", energy_consumption , "J\n")
+    print("System Execution time:", data.iat[0,1],". Idle percentage:", idle_percentage, "%\n")
 elif scheduler == "RM":
-    idle_percentage, energy_consumption, schedule = schedule_rm(data)
+    idle_percentage, energy_consumption, schedule, missed_deadline = schedule_rm(data)
     print(schedule)
-    print("Schedule", scheduler, "energy consumption:", energy_consumption , "J\n")
-    print("Schedule", scheduler, "idle percentage:", idle_percentage, "%\n")
+    print("Schedule", scheduler,". Energy consumption:", energy_consumption , "J\n")
+    print("System Execution time:", data.iat[0,1],". Idle percentage:", idle_percentage, "%\n")
 else:
     print("Invalid scheduling algorithm.")
     sys.exit(1)
